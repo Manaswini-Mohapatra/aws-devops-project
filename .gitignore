@@ -23,4 +23,16 @@ dist-ssr
 *.sln
 *.sw?
 
-
+# --- ADD THESE LINES FOR TERRAFORM ---
+# Terraform files to ignore
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars # IMPORTANT: This ignores your terraform.tfvars file.
+override.tf
+override.tf.json
+.terraformrc
+terraform.rc
+# --- END TERRAFORM IGNORE ---
