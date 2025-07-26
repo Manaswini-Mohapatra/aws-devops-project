@@ -16,9 +16,10 @@ spec:
     spec:
       containers:
         - name: myapp
-          image: myapp:latest # Replace with your actual image
+          image: docker.io/manaswinimohapatra/devops-demo:v20250706170727
+
           ports:
-            - containerPort: 3000
+            - containerPort: 3000  # ✅ Change this if your app listens on a different port
           env:
             - name: DB_USERNAME
               valueFrom:
