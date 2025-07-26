@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./terraform  # <-- adjust this to your Terraform code folder
+        working-directory: ./terraform
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -33,7 +33,7 @@ jobs:
       - name: Run tfsec (Terraform security scan)
         uses: aquasecurity/tfsec-action@v1.0.0
         with:
-          working_directory: ./terraform  # <-- ensure tfsec scans the correct path
+          working_directory: ./terraform
 
   docker-security:
     name: Docker Build & Trivy Scan
