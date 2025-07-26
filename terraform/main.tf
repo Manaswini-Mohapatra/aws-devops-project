@@ -1,3 +1,4 @@
+# Triggering GitHub Actions workflow
 provider "aws" {
   region = var.aws_region
 }
