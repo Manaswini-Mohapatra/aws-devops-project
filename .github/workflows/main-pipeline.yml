@@ -52,7 +52,8 @@ jobs:
 
       - name: Install Trivy
         run: |
-          wget https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh -O - | sudo bash
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | bash
+          echo "$HOME/bin" >> $GITHUB_PATH
 
       - name: Scan image with Trivy
-        run: trivy image --exit-code 1 --severity CRITICAL,HIGH myapp:latest
+        run: ./bin/trivy image --exit-code 1 --severity CRITICAL,HIGH myapp:latest
