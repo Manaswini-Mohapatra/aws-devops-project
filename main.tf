@@ -2,7 +2,6 @@ provider "aws" {
   region = var.aws_region
 }
 
-# S3 bucket to store artifacts
 resource "aws_s3_bucket" "artifact_bucket" {
   bucket        = var.bucket_name
   force_destroy = true
@@ -14,8 +13,6 @@ resource "aws_s3_bucket_versioning" "versioning" {
     status = "Enabled"
   }
 }
-
-# --- Start: Network Resources (VPC, Subnet, Internet Gateway, Route Table) ---
 
 resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
@@ -64,9 +61,6 @@ resource "aws_route_table_association" "public_rt_association" {
   route_table_id = aws_route_table.public_rt.id
 }
 
-# --- End: Network Resources ---
-
-# IAM role for CodeBuild
 resource "aws_iam_role" "codebuild_role" {
   name = "${var.project_name}-codebuild-role"
   assume_role_policy = jsonencode({
@@ -79,22 +73,6 @@ resource "aws_iam_role" "codebuild_role" {
   })
 }
 
-resource "aws_iam_role_policy" "codebuild_policy" {
-  name = "${var.project_name}-codebuild-policy"
-  role = aws_iam_role.codebuild_role.id
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect   = "Allow",
-        Action   = ["logs:*", "s3:*"],
-        Resource = "*"
-      }
-    ]
-  })
-}
-
-# IAM role for CodePipeline + CodeDeploy
 resource "aws_iam_role" "codepipeline_role" {
   name = "${var.project_name}-codepipeline-role"
   assume_role_policy = jsonencode({
@@ -109,13 +87,25 @@ resource "aws_iam_role" "codepipeline_role" {
   })
 }
 
+# Only keep one aws_iam_role_policy to avoid duplication error
 resource "aws_iam_role_policy" "codepipeline_policy" {
   name = "${var.project_name}-codepipeline-policy"
   role = aws_iam_role.codepipeline_role.id
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
-      { Effect = "Allow", Action = ["*"], Resource = "*" }
+      {
+        Effect = "Allow",
+        Action = [
+          "codepipeline:*",
+          "codedeploy:*",
+          "s3:*",
+          "codebuild:*",
+          "iam:PassRole",
+          "cloudwatch:*"
+        ],
+        Resource = "*"
+      }
     ]
   })
 }
@@ -144,7 +134,6 @@ resource "aws_codedeploy_deployment_group" "group" {
   }
 }
 
-# ✅ FIXED: CodeBuild project - ensure correct working directory
 resource "aws_codebuild_project" "build" {
   name         = "${var.project_name}-build"
   service_role = aws_iam_role.codebuild_role.arn
@@ -157,8 +146,8 @@ resource "aws_codebuild_project" "build" {
     compute_type = "BUILD_GENERAL1_SMALL"
     image        = "aws/codebuild/amazonlinux2-x86_64-standard:5.0"
     type         = "LINUX_CONTAINER"
-
   }
+
   source {
     type      = "CODEPIPELINE"
     buildspec = "buildspec.yml"
@@ -244,17 +233,12 @@ resource "aws_iam_instance_profile" "ec2_profile" {
 
 resource "aws_iam_policy" "ec2_artifact_access_policy" {
   name = "${var.project_name}-ec2-s3-access"
-
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
       {
         Effect = "Allow",
-        Action = [
-          "s3:GetObject",
-          "s3:GetObjectVersion",
-          "s3:ListBucket"
-        ],
+        Action = ["s3:GetObject", "s3:GetObjectVersion", "s3:ListBucket"],
         Resource = [
           "arn:aws:s3:::${var.bucket_name}",
           "arn:aws:s3:::${var.bucket_name}/*"
@@ -280,12 +264,14 @@ resource "aws_security_group" "web_sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -301,9 +287,11 @@ resource "aws_instance" "web" {
   iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
   vpc_security_group_ids = [aws_security_group.web_sg.id]
   subnet_id              = aws_subnet.public.id
+
   tags = {
     "${var.instance_tag_key}" = var.instance_tag_value
   }
+
   user_data = <<-EOF
     #!/bin/bash
     yum update -y

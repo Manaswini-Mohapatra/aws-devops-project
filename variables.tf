@@ -1,3 +1,4 @@
+
 variable "aws_region" {
   default = "eu-north-1"
 }
@@ -50,3 +51,8 @@ variable "instance_tag_key" {
 variable "instance_tag_value" {
   default = "webserver"
 }
+variable "elb_name" {
+  description = "Name of the ELB to associate with CodeDeploy deployment group"
+  type        = string
+}
+
