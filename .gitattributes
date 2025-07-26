@@ -1,0 +1,19 @@
+# Set default behavior to automatically normalize line endings
+* text=auto
+
+# Terraform and configuration files
+*.tf text eol=lf
+*.tfvars text eol=lf
+*.pem text eol=lf
+
+# Scripts
+*.sh text eol=lf
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+
+# Ignore Terraform state files
+terraform.tfstate binary
+terraform.tfstate.backup binary
+
+# Ignore provider binaries
+.terraform/* binary
