@@ -1,3 +1,4 @@
+# appspec.yml for CodeDeploy configuration
 version: 0.0
 os: linux
 files:
