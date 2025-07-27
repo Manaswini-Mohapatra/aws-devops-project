@@ -1,3 +1,5 @@
+# install.sh - Script to install and start Apache (httpd) server
+
 #!/bin/bash
 set -xe
 
